@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SF Movie App</title>
+    <link rel="stylesheet" href="./stylesheets/style.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <h1> Film Locations in San Francisco</h1>
+        </div>
+        <div class="row">
+
+            <form class="movieForm" id="scrollable-dropdown-menu" method="post">
+                <input class="typeahead" type="text" name="search" id="search" placeholder="Movie title">
+                <input class="btn btn-primary" style="margin-top: 7px; height:30px" type="submit" value="Search">
+            </form>
+
+
+        </div>
+    </div>
+
+
+    <div id="map"></div>
+
+
+
+
+
+
+
+    <!--<div id="multiple-datasets">
+        <input class="typeahead" type="text" placeholder="NBA and NHL teams">
+    </div>-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="./javascripts/googlemap.js"></script>
+    <script src="./javascripts/typeahead.js"></script>
+    <script src="./javascripts/global.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBBk8iEPW_F1uwvDz37d1-BQbSDflI3N0&callback=initMap" asyncdefer></script>
+</body>
+
+</html>
