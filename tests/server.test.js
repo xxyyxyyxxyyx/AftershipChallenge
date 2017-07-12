@@ -3,24 +3,15 @@
 process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
-// const rewire = require('rewire');
 const expect = require('expect');
 const app = require('./../app');
 
-// const path = require('path');
-// let template = {
-// 	compile: expect.createSpy()
-// };
-// app.__set__('hbs', template);
 describe('Test Server', function () {
 	describe('GET /', function () {
 		it('should render index.hbs with status code 200', function (done) {
 			request(app)
 				.get('/')
 				.expect(200)
-				// .expect(function (res) {
-				// 	expect(template.compile).toHaveBeenCalled();//With(path.join(__dirname, '../views/index.hbs'));
-				// })
 				.end(done);
 		});
 	});

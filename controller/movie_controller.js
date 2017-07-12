@@ -1,7 +1,8 @@
 'use strict';
 
 // Dependencies
-const Movie = require('../models/movies');
+const Movie = require('../models/movies').movie;
+const Temp = require('../models/movies').temp;
 const axios = require('axios');
 const geocode = require('../geocode/geocode');
 const path = require('path');
@@ -16,59 +17,66 @@ exports.search = function (req, res) {
 	const SEARCHED_ITEM = req.body.search;
 	logger.info(`Getting locations for movie title '${SEARCHED_ITEM}'`);
 	Movie.find({ title: SEARCHED_ITEM }, function (err, movies) {
+		// Arrays for stroing movies and their geocodes
 		const GEOCODES = [];
+		const MOVIES = [];
 		// Variable for monitoring end of locations to be queried
 		let length = movies.length;
-		movies.forEach(function (location) {
-			// Gets geocode from database
-			if (location.geocode !== undefined) {
-				logger.debug(`Getting geocode from database for '${location.locations}'`);
-				GEOCODES.push(location.geocode);
+		movies.forEach(function (movie, index) {
+			// Gets geocode from database 
+			if (movie.geocode !== undefined) {
+				logger.debug(`Getting geocode from database for '${movie.locations}'`);
+				GEOCODES.push(movie.geocode);
+				MOVIES.push(movie);
 			}
 			else {
-				// Gets geocode from google apis
-				logger.warn(`Getting geocode from google api for '${location.locations}'`);
-				// Concatenating SF 415 for more accurate results
-				geocode.geocode_address(location.locations + ' SF 415', function (error, results) {
-					if (error) {
-						logger.error(error, location.locations);
-						length--;
-					}
-					else {
-						Movie.update({ _id: location._id }, { geocode: { lat: results.latitude, lng: results.longitude } }, function (err) {
-							if (err) {
-								logger.error(err);
-							}
-							else {
-								logger.debug(`Updated ${location.locations} with geocode values`);
-							}
-						});
-						GEOCODES.push({
-							lat: results.latitude,
-							lng: results.longitude
-						});
-					}
-					// Check whether all locations have been updated
-					if (GEOCODES.length === length) {
-						res.send({
-							geocodes: GEOCODES,
-							movieDetails: movies
-						});
-					}
-				});
+				// Set timeout for successive call to google api
+				setTimeout(function () {
+					// Gets geocode from google apis
+					logger.warn(`Getting geocode from google api for '${movie.locations}'`);
+					// Concatenating SF 415 for more accurate results
+					geocode.geocode_address(movie.locations + ' SF 415', function (error, results) {
+						if (error) {
+							logger.error(error, movie.locations);
+							length--;
+						}
+						else {
+							Movie.update({ _id: movie._id }, { geocode: { lat: results.latitude, lng: results.longitude } }, function (err) {
+								if (err) {
+									logger.error(err);
+								}
+								else {
+									logger.debug(`Updated ${movie.locations} with geocode values`);
+								}
+							});
+							GEOCODES.push({
+								lat: results.latitude,
+								lng: results.longitude
+							});
+							MOVIES.push(movie);
+						}
+						// Send the result to the frontend
+						if (GEOCODES.length === length) {
+							res.send({
+								geocodes: GEOCODES,
+								movieDetails: MOVIES
+							});
+						}
+					});
+				}, 200 * (index));
 			}
 		});
-		// Check whether all locations have been updated
+		// Send the result to the frontend
 		if (GEOCODES.length === length) {
 			res.send({
 				geocodes: GEOCODES,
-				movieDetails: movies
+				movieDetails: MOVIES
 			});
 		}
 	});
 };
 
-// Finds the list of directors from the database ( test feature)
+// Finds the list of directors from the database ( test feature not implemented)
 exports.find_directors = function (req, res) {
 	const REG_EXP = new RegExp('^' + req.query.query);
 	Movie.find({ director: { $regex: REG_EXP, $options: 'i' }, locations: { '$exists': false } }).distinct('director', function (err, data) {
@@ -98,7 +106,47 @@ const populate_database = function (url, callback) {
 			logger.error(error);
 		});
 };
-// Populates database from remote on a daily basis 
+
+// Helper function for updating database from remote source
+const update_database = function (url, callback) {
+	axios.get(url)
+		.then(function (response) {
+			logger.warn('Creating temp collection from remote source');
+			Temp.insertMany(response.data, function (err, temp) {
+				logger.info('Created temp collection successfully');
+				// Find all distinct titles in old collection
+				Movie.distinct('title', function (err, movieTitles) {
+					// Find all distinct titles in new collection
+					Temp.distinct('title', function (err, tempTitles) {
+						// Get the list of new titles
+						let filtered = tempTitles.filter(function (title) {
+							return movieTitles.indexOf(title) < 0;
+						});
+						// Call callback if no new records
+						if (filtered.length === 0) {
+							logger.info('No new updates');
+							callback(undefined, tempTitles);
+						}
+						else {
+							// For each new title, find the entries in new collection and insert it into old collection
+							filtered.forEach(function (title) {
+								Temp.find({ title: title }, function (err, res) {
+									Movie.collection.insert(res, function (err, res) {
+										callback(undefined, res);
+									});
+								});
+							});
+						}
+					});
+				});
+			});
+		})
+		.catch(function (error) {
+			logger.error(error);
+		});
+};
+
+// Populates database from remote API endpoint on a daily basis 
 exports.create = function (req, res) {
 	let today = new Date().toDateString();
 	Movie.find({}, function (err, results) {
@@ -110,21 +158,22 @@ exports.create = function (req, res) {
 				res.render('index');
 			}
 			else {
-				// Remove old database records
-				Movie.remove({}, function (err, result) {
-					logger.warn('Removed outdated collection from database');
-				});
-				populate_database(URL, function (err, result) {
-					res.render('index', result);
+				update_database(URL, function (err) {
+					logger.warn('Removing temporary collection');
+					Temp.remove({}, function () {
+						res.render('index');
+					});
 				});
 			}
 		}
 		else {
-			populate_database(URL, function (err, result) {
-				res.render('index', result);
+			populate_database(URL, function (err) {
+				res.render('index');
 			});
 		}
 	});
 };
+
 // Exporting helper function for unit testing
 exports.populate_database = populate_database;
+exports.update_database = update_database;

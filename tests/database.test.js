@@ -6,15 +6,17 @@ process.env.NODE_ENV = 'test';
 const request = require('supertest');
 const expect = require('expect');
 const app = require('./../app');
-const Movie = require('../models/movies');
+const Movie = require('../models/movies').movie;
+const Temp = require('../models/movies').temp;
 const movie_controller = require('../controller/movie_controller');
+
 
 describe('Test Database Initialization', function () {
 	// Clear database
 	before(function (done) {
-		Movie.remove({}).then(function (err) {
+		Movie.remove({}, function (err) {
 			done();
-		});
+		})
 	});
 	// Populate Database
 	it('should populate database from remote json file', function (done) {
@@ -29,9 +31,41 @@ describe('Test Database Initialization', function () {
 	});
 });
 
-describe('Test Database', function () {
+describe('Test Database Operations', function () {
+
+	it('should update old database collection with new record', function (done) {
+		this.timeout(100000);
+		// Create test data
+		const test_data = {
+			actor_1: 'sunil',
+			actor_2: 'sunil',
+			actor_3: 'sunil',
+			director: 'sunil',
+			distributor: 'sunil',
+			fun_facts: 'sunil',
+			locations: 'sunil',
+			production_company: 'sunil',
+			release_year: 'sunil',
+			title: 'sunil',
+			writer: 'sunil'
+		};
+		var test_record = new Temp(test_data);
+		// Save data to temporary collection
+		test_record.save(function () {
+		});
+		const URL = 'https://data.sfgov.org/resource/wwmu-gmzc.json';
+		movie_controller.update_database(URL, function (err, res) {
+			Movie.find({ title: 'sunil' }).then(function (result) {
+				expect(result[0]).toInclude({ title: 'sunil' });
+				Temp.remove({}, function () {
+					done();
+				});
+			});
+		});
+	});
 
 	it('should update database records for the title with geocode values', function (done) {
+		this.timeout(100000);
 		// The chosen title has 4 records asscoiated with it
 		let title = 'A Night Full of Rain';
 		request(app)
@@ -68,6 +102,4 @@ describe('Test Database', function () {
 			})
 			.end(done);
 	});
-
-
 });

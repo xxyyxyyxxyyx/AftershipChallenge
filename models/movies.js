@@ -20,4 +20,10 @@ const MovieSchema = new mongoose.Schema({
 	geocode: Object
 });
 
-module.exports = mongoose.model('Movie', MovieSchema);
+// module.exports = mongoose.model('Movie', MovieSchema);
+
+module.exports = {
+	movie: mongoose.model('Movie', MovieSchema),
+	temp: mongoose.model('temp', MovieSchema)
+};
+
