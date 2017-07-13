@@ -15,7 +15,7 @@ The solution uses MVC architecture for separation of concerns. Each element of t
 ## Further Improvements
 * Preprocessing of locations with vague addresses to improve accuracy and speed response time from local database.
 * Further reading into Mongoose and MondoDB driver documentation to implement set difference operation natively. Currently set difference operation is implemented manually.
-* Further reading into promises, arrow functions and async callbacks for more cleaner elegant code.
+* Further reading into promises and arrow functions for more cleaner elegant code.
 * Further reading into rewire or similar modules for dependency injection for integration testing.
 * Implementing trie data structure instead of using typeahead.js library.
 * Further reading into better logging practices.
