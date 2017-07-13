@@ -11,13 +11,13 @@ The solution uses MVC architecture for separation of concerns. Each element of t
 * The informal syntax of film locations made it impossible to get geocode values for some of the records and affected the overall accuracy of other map markers.
 * No information on the time complexity of typehead.js library implementation. Unsure about the performance for very large auto complete list.
 * Initially, slower reponse time for movies with numerous locations due to the use of setTimeout function to circumvent query limit.
-* Response time could have been improved if locations with response status of ZERO_RESULTS were to be skipped (hence no setTimeout is fired) while getting geocode from local database. But that would entail discarding record information and hence has not been implemented. Relying on preprocessing of such location addresses to solve the issue without loss of information.
+* Response time could have been improved if locations with response status of ZERO_RESULTS were to be skipped (hence no setTimeout is fired) while getting geocode from local database. But that would entail discarding record information and hence has not been implemented. Prefer relying on preprocessing of such location addresses to solve the issue without loss of information.
 ## Further Improvements
 * Preprocessing of locations with vague addresses to improve accuracy and speed response time from local database.
 * Further reading into Mongoose and MondoDB driver documentation to implement set difference operation natively. Currently set difference operation is implemented manually.
 * Further reading into promises, arrow functions and async callbacks for more cleaner elegant code.
 * Further reading into rewire or similar modules for dependency injection for integration testing.
-* Research into implementing trie data structure instead of using typeahead.js library.
+* Implementing trie data structure instead of using typeahead.js library.
 * Further reading into better logging practices.
 ## Links
 Heroku App : [SF Movie App](https://xxyysf.herokuapp.com/)  
